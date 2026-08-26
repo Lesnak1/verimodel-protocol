@@ -425,11 +425,11 @@
                 <div class="tab-pane active" id="tab-create">
                     <div class="form-group">
                         <label class="form-label">Contract Address</label>
-                        <input type="text" class="form-input" id="contractAddressInput" value="0xB8e1c3559B66B1b1d7d0823FBEB5A967732e999">
+                        <input type="text" class="form-input" id="contractAddressInput" value="0x82d461f320188047915512702759902641203002">
                     </div>
                     <div class="form-group">
                         <label class="form-label">Model Developer Address</label>
-                        <input type="text" class="form-input" id="createDeveloperAddr" value="0x70997970C51812dc3A010C7d01b50e0d17dc79C8">
+                        <input type="text" class="form-input" id="createDeveloperAddr" value="0x70997970c51812dc3a010c7d01b50e0d17dc79c8">
                     </div>
                     <div class="form-group">
                         <label class="form-label">Benchmark Category</label>
@@ -616,8 +616,8 @@
                 btn.disabled = true;
                 btn.innerText = '⏳ Locking Bounty & Creating Challenge...';
 
-                const contractAddr = document.getElementById('contractAddressInput').value.trim();
-                const developer = document.getElementById('createDeveloperAddr').value.trim();
+                const contractAddr = document.getElementById('contractAddressInput').value.trim().toLowerCase();
+                const developer = document.getElementById('createDeveloperAddr').value.trim().toLowerCase();
                 const category = document.getElementById('createCategory').value;
                 const spec = document.getElementById('createSpec').value.trim();
                 const leaderboardUrl = document.getElementById('createLeaderboardUrl').value.trim();

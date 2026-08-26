@@ -3,16 +3,9 @@ import { testnetBradbury, studionet, localnet } from 'genlayer-js/chains';
 
 /**
  * VeriModel GenLayer Client Integration SDK
- * Complete TypeScript bindings for all intelligent contract methods on GenLayer:
- * - create_challenge (Sponsor deposits benchmark grant bounty and defines score thresholds)
- * - stake_and_enter_challenge (Developer deposits collateral stake to activate challenge)
- * - adjudicate_benchmark (Triggers multi-validator neural consensus over live authority leaderboards)
- * - release_expired_unclaimed_challenge (Unlocks expired challenges fail-closed)
- * - get_challenge (Read-only view of benchmark state, required metrics, and consensus verdict)
- * - get_protocol_stats (Read-only view of active challenges and locked liabilities)
  */
 
-export const DEFAULT_VERIMODEL_ADDRESS: Address = '0xB8e1c3559B66B1b1d7d0823FBEB5A967732e999';
+export const DEFAULT_VERIMODEL_ADDRESS: Address = '0x82d461f320188047915512702759902641203002';
 
 export interface ChallengeState {
   challenge_id: number;
@@ -66,9 +59,6 @@ export function getGenLayerClient(
   });
 }
 
-/**
- * Creates an AI Benchmark Grant Challenge and deposits bounty escrow.
- */
 export async function createChallenge(
   client: ReturnType<typeof getGenLayerClient>,
   contractAddress: Address,
@@ -84,10 +74,10 @@ export async function createChallenge(
   const stakeWei = BigInt(Math.floor(Number(requiredDeveloperStakeGen) * 1e18));
 
   const txHash = await client.writeContract({
-    address: contractAddress,
+    address: contractAddress.toLowerCase() as Address,
     functionName: 'create_challenge',
     args: [
-      modelDeveloper,
+      modelDeveloper.toLowerCase() as Address,
       targetCategory,
       benchmarkSpecification,
       committedLeaderboardUrl,
@@ -100,9 +90,6 @@ export async function createChallenge(
   return txHash as `0x${string}`;
 }
 
-/**
- * Model developer deposits collateral stake to activate challenge.
- */
 export async function stakeAndEnterChallenge(
   client: ReturnType<typeof getGenLayerClient>,
   contractAddress: Address,
@@ -112,7 +99,7 @@ export async function stakeAndEnterChallenge(
   const stakeWei = BigInt(Math.floor(Number(stakeGenAmount) * 1e18));
 
   const txHash = await client.writeContract({
-    address: contractAddress,
+    address: contractAddress.toLowerCase() as Address,
     functionName: 'stake_and_enter_challenge',
     args: [BigInt(challengeId)],
     value: stakeWei,
@@ -121,9 +108,6 @@ export async function stakeAndEnterChallenge(
   return txHash as `0x${string}`;
 }
 
-/**
- * Evaluates live benchmark telemetry and triggers multi-validator neural consensus adjudication.
- */
 export async function adjudicateBenchmark(
   client: ReturnType<typeof getGenLayerClient>,
   contractAddress: Address,
@@ -132,7 +116,7 @@ export async function adjudicateBenchmark(
   submittedEvidenceUrl: string = ''
 ): Promise<`0x${string}`> {
   const txHash = await client.writeContract({
-    address: contractAddress,
+    address: contractAddress.toLowerCase() as Address,
     functionName: 'adjudicate_benchmark',
     args: [BigInt(challengeId), evalRunNotes, submittedEvidenceUrl],
     value: BigInt(0),
@@ -141,16 +125,13 @@ export async function adjudicateBenchmark(
   return txHash as `0x${string}`;
 }
 
-/**
- * Releases expired challenge fail-closed.
- */
 export async function releaseExpiredChallenge(
   client: ReturnType<typeof getGenLayerClient>,
   contractAddress: Address,
   challengeId: bigint | number
 ): Promise<`0x${string}`> {
   const txHash = await client.writeContract({
-    address: contractAddress,
+    address: contractAddress.toLowerCase() as Address,
     functionName: 'release_expired_unclaimed_challenge',
     args: [BigInt(challengeId)],
     value: BigInt(0),
@@ -159,16 +140,13 @@ export async function releaseExpiredChallenge(
   return txHash as `0x${string}`;
 }
 
-/**
- * Queries challenge details from contract storage.
- */
 export async function getChallenge(
   client: ReturnType<typeof getGenLayerClient>,
   contractAddress: Address,
   challengeId: bigint | number
 ): Promise<ChallengeState> {
   const data = await client.readContract({
-    address: contractAddress,
+    address: contractAddress.toLowerCase() as Address,
     functionName: 'get_challenge',
     args: [BigInt(challengeId)],
   });
@@ -176,15 +154,12 @@ export async function getChallenge(
   return data as unknown as ChallengeState;
 }
 
-/**
- * Queries protocol-wide statistics.
- */
 export async function getProtocolStats(
   client: ReturnType<typeof getGenLayerClient>,
   contractAddress: Address
 ): Promise<ProtocolStats> {
   const data = await client.readContract({
-    address: contractAddress,
+    address: contractAddress.toLowerCase() as Address,
     functionName: 'get_protocol_stats',
     args: [],
   });
