@@ -27,12 +27,15 @@ def test_benchmark_success_and_bounty_release(
         committed_url,
         30 * 10**18,  # Required stake: 30 GEN
         604800,  # 7 days
+        "deep-coder-v2",
     )
     assert chal_id == 0
 
     c_init = contract.get_challenge(chal_id)
     assert c_init["sponsor"].lower() == str(direct_alice).lower()
     assert c_init["model_developer"].lower() == str(direct_bob).lower()
+    assert c_init["model_identifier"] == "deep-coder-v2"
+    assert c_init["evaluator_authority"] == "huggingface.co"
     assert c_init["status"] == "PENDING_STAKE"
     assert c_init["bounty_escrow"] == str(100 * 10**18)
     assert c_init["required_developer_stake"] == str(30 * 10**18)
@@ -87,13 +90,151 @@ def test_benchmark_success_and_bounty_release(
     assert c_final["is_finalized"] is True
 
 
-def test_benchmark_falsification_slashing(
+def test_repeated_404_responses_leave_challenge_active_and_move_no_funds(
     direct_vm, direct_deploy, direct_alice, direct_bob
 ):
     """
-    Test adversarial benchmark falsification & developer stake slashing:
-    1. Developer claims 85% MMLU but live eval telemetry shows only 52.4% (benchmark contaminated/failed).
-    2. Validators verify failure on live telemetry and reach consensus on SLASH_CHALLENGE (conf: 98).
+    Steward Verification Test:
+    Verifies that HTTP 404 responses and repeated fetch/status failures are strictly treated
+    as retry outcomes (EXTEND_EVAL_WINDOW), NEVER as evidence for slashing, leaving the challenge
+    fully active and moving zero escrow funds.
+    """
+    contract = direct_deploy("contracts/verimodel.py")
+
+    # Step 1: Alice creates challenge with 50 GEN bounty
+    direct_vm.sender = direct_alice
+    direct_vm.value = 50 * 10**18
+    committed_url = "https://huggingface.co/api/models/open-llm-leaderboard/evals/pending-model-7b"
+
+    chal_id = contract.create_challenge(
+        str(direct_bob),
+        "REASONING_MATH_MMLU",
+        "Achieve MMLU >= 75.0%",
+        committed_url,
+        20 * 10**18,  # Required stake: 20 GEN
+        604800,
+        "pending-model-7b",
+    )
+
+    # Step 2: Bob stakes 20 GEN collateral
+    direct_vm.sender = direct_bob
+    direct_vm.value = 20 * 10**18
+    contract.stake_and_enter_challenge(chal_id)
+
+    stats_before = contract.get_protocol_stats()
+    expected_liabilities = str(70 * 10**18)
+    assert stats_before["total_active_liabilities"] == expected_liabilities
+
+    # Step 3: First Adjudication Attempt - Authority endpoint returns HTTP 404 (endpoint not yet published)
+    direct_vm.mock_web(
+        r".*",
+        {"status": 404, "body": "404 Not Found - Benchmark eval job is still compiling"},
+    )
+
+    direct_vm.sender = direct_alice
+    contract.adjudicate_benchmark(chal_id, "Checking if benchmark published", committed_url)
+
+    c_attempt1 = contract.get_challenge(chal_id)
+    assert c_attempt1["status"] == "ACTIVE", "Challenge must remain ACTIVE on 404"
+    assert c_attempt1["is_finalized"] is False, "Challenge must NOT reach finality on 404"
+    assert c_attempt1["adjudication_verdict"] == "EXTEND_EVAL_WINDOW"
+    assert c_attempt1["adjudication_confidence"] == 0
+    assert "[EXTERNAL]" in c_attempt1["adjudication_summary"]
+    assert "404" in c_attempt1["adjudication_summary"]
+
+    stats_after_1 = contract.get_protocol_stats()
+    assert stats_after_1["total_active_liabilities"] == expected_liabilities, "No funds must move on 404"
+
+    # Step 4: Second Adjudication Attempt - Repeated HTTP 404 (still pending)
+    direct_vm.sender = direct_bob
+    contract.adjudicate_benchmark(chal_id, "Second check by developer", committed_url)
+
+    c_attempt2 = contract.get_challenge(chal_id)
+    assert c_attempt2["status"] == "ACTIVE", "Challenge must remain ACTIVE on repeated 404"
+    assert c_attempt2["is_finalized"] is False, "Challenge must NOT reach finality on repeated 404"
+    assert c_attempt2["adjudication_verdict"] == "EXTEND_EVAL_WINDOW"
+    assert c_attempt2["adjudication_confidence"] == 0
+
+    stats_after_2 = contract.get_protocol_stats()
+    assert stats_after_2["total_active_liabilities"] == expected_liabilities, "Liabilities must remain 100% preserved"
+
+    # Step 5: Third Adjudication Attempt - HTTP 503 Service Unavailable / Fetch error
+    direct_vm.mock_web(
+        r".*",
+        {"status": 503, "body": "503 Service Unavailable"},
+    )
+    direct_vm.sender = direct_alice
+    contract.adjudicate_benchmark(chal_id, "Third check during server maintenance", committed_url)
+
+    c_attempt3 = contract.get_challenge(chal_id)
+    assert c_attempt3["status"] == "ACTIVE", "Challenge must remain ACTIVE on 503 status failure"
+    assert c_attempt3["is_finalized"] is False
+    assert c_attempt3["adjudication_verdict"] == "EXTEND_EVAL_WINDOW"
+
+    stats_after_3 = contract.get_protocol_stats()
+    assert stats_after_3["total_active_liabilities"] == expected_liabilities, "Zero funds moved across all 3 failed fetch retries"
+
+
+def test_sub_threshold_confidence_cannot_slash_and_moves_no_funds(
+    direct_vm, direct_deploy, direct_alice, direct_bob
+):
+    """
+    Test that sub-threshold confidence (conf < 80) strictly prevents slashing
+    and leaves the challenge active for subsequent retry without moving any funds.
+    """
+    contract = direct_deploy("contracts/verimodel.py")
+
+    direct_vm.sender = direct_alice
+    direct_vm.value = 40 * 10**18
+    committed_url = "https://huggingface.co/api/models/open-llm-leaderboard/evals/ambiguous-model"
+
+    chal_id = contract.create_challenge(
+        str(direct_bob),
+        "CODING_HUMANEVAL",
+        "Achieve HumanEval >= 80.0%",
+        committed_url,
+        10 * 10**18,
+        604800,
+        "ambiguous-model",
+    )
+
+    direct_vm.sender = direct_bob
+    direct_vm.value = 10 * 10**18
+    contract.stake_and_enter_challenge(chal_id)
+
+    # Mock ambiguous telemetry where LLM confidence is only 65 (below 80 threshold)
+    direct_vm.mock_web(r".*", {"status": 200, "body": json.dumps({"telemetry": "incomplete_log", "preliminary_score": 62.0})})
+    direct_vm.mock_llm(
+        r".*",
+        json.dumps({
+            "action_decision": "SLASH_CHALLENGE",
+            "confidence_score": 65,  # SUB-THRESHOLD CONFIDENCE (< 80)
+            "benchmark_achieved": False,
+            "summary": "Preliminary logs indicate low score, but telemetry is noisy and uncertain (confidence 65%).",
+        }),
+    )
+
+    direct_vm.sender = direct_alice
+    contract.adjudicate_benchmark(chal_id, "Premature slash attempt with weak evidence", committed_url)
+
+    c = contract.get_challenge(chal_id)
+    assert c["status"] == "ACTIVE", "Sub-threshold confidence must NOT slash the challenge"
+    assert c["is_finalized"] is False, "Must remain active for retry"
+    assert c["adjudication_verdict"] == "EXTEND_EVAL_WINDOW"
+    assert c["adjudication_confidence"] == 65
+    assert "[EXPECTED] Sub-threshold confidence" in c["adjudication_summary"]
+
+    stats = contract.get_protocol_stats()
+    assert stats["total_active_liabilities"] == str(50 * 10**18), "Zero funds moved"
+
+
+def test_benchmark_falsification_slashing_with_high_confidence(
+    direct_vm, direct_deploy, direct_alice, direct_bob
+):
+    """
+    Test affirmative benchmark falsification & developer stake slashing with high confidence:
+    1. Telemetry proves 52.4% MMLU against 80.0% required with verified contamination.
+    2. Validators verify failure on live telemetry and reach consensus on SLASH_CHALLENGE (conf: 98 >= 80).
     3. Full 130 GEN (100 GEN bounty refund + 30 GEN slashed developer stake) is awarded to the Sponsor (Alice).
     """
     contract = direct_deploy("contracts/verimodel.py")
@@ -109,13 +250,14 @@ def test_benchmark_falsification_slashing(
         committed_url,
         30 * 10**18,
         604800,
+        "fake-reasoner-7b",
     )
 
     direct_vm.sender = direct_bob
     direct_vm.value = 30 * 10**18
     contract.stake_and_enter_challenge(chal_id)
 
-    # Mock failed evaluation telemetry
+    # Mock verified failed evaluation telemetry
     direct_vm.mock_web(
         r".*",
         {
@@ -135,7 +277,7 @@ def test_benchmark_falsification_slashing(
             "action_decision": "SLASH_CHALLENGE",
             "confidence_score": 98,
             "benchmark_achieved": False,
-            "summary": "Model achieved only 52.4% MMLU against the required 80.0% threshold with evidence of test-set leakage. Challenge slashed.",
+            "summary": "Model achieved only 52.4% MMLU against the required 80.0% threshold with clear proof of test-set leakage. Challenge slashed.",
         }),
     )
 
@@ -149,7 +291,11 @@ def test_benchmark_falsification_slashing(
     c = contract.get_challenge(chal_id)
     assert c["status"] == "SLASHED"
     assert c["adjudication_verdict"] == "SLASH_CHALLENGE"
+    assert c["adjudication_confidence"] == 98
     assert c["is_finalized"] is True
+
+    stats = contract.get_protocol_stats()
+    assert stats["total_active_liabilities"] == "0", "Liabilities cleanly settled"
 
 
 def test_in_progress_eval_grace_period_extension(
@@ -169,6 +315,7 @@ def test_in_progress_eval_grace_period_extension(
         committed_url,
         15 * 10**18,
         604800,
+        "queued-model",
     )
 
     direct_vm.sender = direct_bob
@@ -212,6 +359,7 @@ def test_mismatched_leaderboard_url_reverts(
         committed_url,
         10 * 10**18,
         604800,
+        "real-model",
     )
 
     direct_vm.sender = direct_bob
@@ -242,6 +390,7 @@ def test_untrusted_domain_spoofing_reverts(
             "https://huggingface.co.attacker.com/evals",
             10 * 10**18,
             604800,
+            "spoofed-model",
         )
 
 
@@ -262,6 +411,7 @@ def test_unauthorized_early_release_reverts(
         committed_url,
         10 * 10**18,
         604800,  # 7 days
+        "model",
     )
 
     # Sponsor attempts early release while coverage is active
@@ -286,6 +436,7 @@ def test_non_developer_stake_reverts(
         committed_url,
         10 * 10**18,
         604800,
+        "model",
     )
 
     # Charlie (third party) attempts to stake

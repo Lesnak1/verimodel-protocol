@@ -111,6 +111,8 @@ class BenchmarkChallenge:
     challenge_id: u256
     sponsor: Address
     model_developer: Address
+    model_identifier: str  # e.g. "meta-llama/Llama-3.1-8B-Instruct" or "Qwen/Qwen2.5-Coder-32B"
+    evaluator_authority: str  # e.g. "huggingface.co", "lmarena.ai", "openrouter.ai"
     target_benchmark_category: str  # "REASONING_MATH_MMLU", "CODING_HUMANEVAL", "SAFETY_ALIGNMENT", "LOW_LATENCY_EDGE"
     benchmark_specification: str
     committed_leaderboard_url: str
@@ -158,10 +160,12 @@ class VeriModel(gl.Contract):
         committed_leaderboard_url: str,
         required_developer_stake_gen: u256,
         duration_seconds: u256,
+        model_identifier: str = "",
     ) -> u256:
         """
         Sponsor creates an AI Benchmark Grant Challenge, deposits bounty prize escrow,
         and defines verifiable score thresholds and committed authority leaderboard URL.
+        Binds the challenge strictly to the model identifier and authoritative evaluator.
         """
         bounty_deposit = gl.message.value
         if bounty_deposit == u256(0):
@@ -180,6 +184,9 @@ class VeriModel(gl.Contract):
                 "Untrusted evaluation source. Must originate from an approved authority domain (HuggingFace, GitHub, LMSYS Arena, OpenRouter, Weights & Biases)."
             )
 
+        evaluator_authority = _extract_hostname(committed_leaderboard_url)
+        clean_model_id = model_identifier.strip() if model_identifier else ""
+
         # Fail-closed runtime timing
         runtime_ts = _get_runtime_timestamp()
         start_ts = runtime_ts
@@ -192,6 +199,8 @@ class VeriModel(gl.Contract):
             challenge_id=challenge_id,
             sponsor=gl.message.sender_address,
             model_developer=developer_addr,
+            model_identifier=clean_model_id,
+            evaluator_authority=evaluator_authority,
             target_benchmark_category=target_benchmark_category,
             benchmark_specification=benchmark_specification,
             committed_leaderboard_url=committed_leaderboard_url.strip(),
@@ -275,6 +284,8 @@ class VeriModel(gl.Contract):
         category = challenge.target_benchmark_category
         bounty_val = challenge.bounty_escrow
         stake_val = challenge.developer_stake_deposited
+        model_id = challenge.model_identifier
+        evaluator_authority = challenge.evaluator_authority
 
         # Multi-Validator Non-Deterministic Consensus Engine
         def leader_fn() -> dict:
@@ -285,10 +296,11 @@ class VeriModel(gl.Contract):
                     "action_decision": "EXTEND_EVAL_WINDOW",
                     "confidence_score": 0,
                     "benchmark_achieved": False,
-                    "summary": f"[EXTERNAL] Authority leaderboard fetch failed with network error: {str(e)[:100]}",
+                    "summary": f"[EXTERNAL] Authority leaderboard fetch failed with network error: {str(e)[:100]}; held for retry.",
                 }
 
             # Strict Fetch Success Validation (Fail Closed): Must return explicit HTTP 200-299 status
+            # All 404s, 500s, and non-2xx status codes are strictly treated as retry outcomes (EXTEND_EVAL_WINDOW), NEVER slashing
             http_status = None
             if hasattr(res, "status") and res.status is not None:
                 http_status = res.status
@@ -304,10 +316,10 @@ class VeriModel(gl.Contract):
                     code = int(http_status)
                     if code < 200 or code >= 300:
                         return {
-                            "action_decision": "SLASH_CHALLENGE" if code == 404 else "EXTEND_EVAL_WINDOW",
+                            "action_decision": "EXTEND_EVAL_WINDOW",
                             "confidence_score": 0,
                             "benchmark_achieved": False,
-                            "summary": f"[EXTERNAL] Authority leaderboard endpoint returned non-success HTTP status {code}.",
+                            "summary": f"[EXTERNAL] Authority leaderboard endpoint returned HTTP status {code}; treated as retry outcome without moving funds.",
                         }
                 except (ValueError, TypeError):
                     pass
@@ -326,12 +338,17 @@ class VeriModel(gl.Contract):
                     "action_decision": "EXTEND_EVAL_WINDOW",
                     "confidence_score": 0,
                     "benchmark_achieved": False,
-                    "summary": "[EXTERNAL] Authority endpoint returned empty leaderboard data.",
+                    "summary": "[EXTERNAL] Authority endpoint returned empty leaderboard data; held for retry.",
                 }
 
             prompt = f"""
             You are the VeriModel Decentralized AI Benchmark & Evaluation Adjudicator on GenLayer.
             Evaluate whether the open-weights AI model met or exceeded the contracted benchmark specifications.
+
+            === CHALLENGED MODEL & EVALUATOR BINDING ===
+            - Challenged Model Identifier: {model_id if model_id else "Open Benchmark Model"}
+            - Bound Evaluator Authority: {evaluator_authority}
+            - Committed Telemetry Source: {target_fetch_url}
 
             === BENCHMARK SPECIFICATION ===
             - Category: {category}
@@ -346,9 +363,9 @@ class VeriModel(gl.Contract):
 
             Evaluate the model's scores and choose exactly ONE of the 3 canonical action decisions:
             1. "action_decision":
-               - "RELEASE_BOUNTY": Leaderboard telemetry proves the model strictly met or exceeded all target benchmark metrics.
-               - "SLASH_CHALLENGE": Telemetry proves falsified evals, contaminated benchmarks, severely degraded metrics, or abandoned submission.
-               - "EXTEND_EVAL_WINDOW": Evaluation runs are in progress or telemetry is pending; holds funds for retry.
+               - "RELEASE_BOUNTY": Leaderboard telemetry strictly proves the model met or exceeded all target benchmark metrics.
+               - "SLASH_CHALLENGE": Telemetry proves verified affirmative falsification, benchmark contamination, or verified sub-threshold failure with high confidence. (HTTP 404s/network errors are NEVER slashed and must be EXTEND_EVAL_WINDOW).
+               - "EXTEND_EVAL_WINDOW": Evaluation runs are in progress, telemetry is missing/404/delayed, or confidence is sub-threshold; holds funds for retry without moving any escrow.
             2. "confidence_score": Integer 0 to 100.
             3. "benchmark_achieved": Boolean true if and only if all benchmark thresholds were verified, false otherwise.
             4. "summary": Concise 1-2 sentence technical assessment.
@@ -384,8 +401,17 @@ class VeriModel(gl.Contract):
                     "action_decision": "EXTEND_EVAL_WINDOW",
                     "confidence_score": 0,
                     "benchmark_achieved": False,
-                    "summary": "[LLM_ERROR] LLM adjudicator returned non-JSON output format.",
+                    "summary": "[LLM_ERROR] LLM adjudicator returned non-JSON output format; held for retry.",
                 }
+
+            # Enforce Meaningful Confidence Floor:
+            # Any decision to RELEASE_BOUNTY or SLASH_CHALLENGE with confidence < 80 is strictly normalized
+            # to EXTEND_EVAL_WINDOW to prevent premature fund transfers on uncertain evidence
+            action_dec = str(analysis.get("action_decision", "EXTEND_EVAL_WINDOW"))
+            conf_score = int(analysis.get("confidence_score", 0))
+            if action_dec in ["RELEASE_BOUNTY", "SLASH_CHALLENGE"] and conf_score < CONFIDENCE_THRESHOLD:
+                analysis["action_decision"] = "EXTEND_EVAL_WINDOW"
+                analysis["summary"] = f"[EXPECTED] Sub-threshold confidence ({conf_score}% < {CONFIDENCE_THRESHOLD}%); held for retry without slashing or releasing escrow."
 
             return analysis
 
@@ -411,6 +437,10 @@ class VeriModel(gl.Contract):
 
             # RELEASE_BOUNTY requires confidence >= 80 and benchmark_achieved == True
             if lead_action == "RELEASE_BOUNTY" and (lead_conf < CONFIDENCE_THRESHOLD or not lead_achieved):
+                return False
+
+            # SLASH_CHALLENGE requires confidence >= 80 and benchmark_achieved == False (affirmative proof of falsification/failing metrics)
+            if lead_action == "SLASH_CHALLENGE" and (lead_conf < CONFIDENCE_THRESHOLD or lead_achieved):
                 return False
 
             val = leader_fn()
@@ -450,7 +480,7 @@ class VeriModel(gl.Contract):
 
         total_funds = bounty_val + stake_val
 
-        # Deterministic Settlement Gate (Exact Payout Preservation)
+        # Deterministic Settlement Gate (Exact Payout Preservation with Meaningful Confidence Floor)
         if action == "RELEASE_BOUNTY" and conf >= u32(CONFIDENCE_THRESHOLD):
             challenge.status = "RELEASED"
             challenge.is_finalized = True
@@ -463,7 +493,7 @@ class VeriModel(gl.Contract):
             # Release Bounty Prize + Developer Stake Refund to Developer
             _Recipient(challenge.model_developer).emit_transfer(value=total_funds)
 
-        elif action == "SLASH_CHALLENGE":
+        elif action == "SLASH_CHALLENGE" and conf >= u32(CONFIDENCE_THRESHOLD):
             challenge.status = "SLASHED"
             challenge.is_finalized = True
 
@@ -476,7 +506,7 @@ class VeriModel(gl.Contract):
             _Recipient(challenge.sponsor).emit_transfer(value=total_funds)
 
         else:
-            # EXTEND_EVAL_WINDOW: Challenge remains active for subsequent retry
+            # EXTEND_EVAL_WINDOW or sub-threshold confidence: Challenge remains active for subsequent retry, 0 funds moved
             challenge.status = "ACTIVE"
             challenge.is_finalized = False
 
@@ -532,6 +562,8 @@ class VeriModel(gl.Contract):
             "challenge_id": int(c.challenge_id),
             "sponsor": str(c.sponsor),
             "model_developer": str(c.model_developer),
+            "model_identifier": c.model_identifier,
+            "evaluator_authority": c.evaluator_authority,
             "target_benchmark_category": c.target_benchmark_category,
             "benchmark_specification": c.benchmark_specification,
             "committed_leaderboard_url": c.committed_leaderboard_url,

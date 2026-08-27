@@ -432,6 +432,11 @@
                         <input type="text" class="form-input" id="createDeveloperAddr" value="0x70997970c51812dc3a010c7d01b50e0d17dc79c8">
                     </div>
                     <div class="form-group">
+                        <label class="form-label">Challenged Model Identifier</label>
+                        <input type="text" class="form-input" id="createModelId" value="meta-llama/Llama-3.1-8B-Instruct">
+                        <small style="color: var(--accent-cyan); font-size: 11px;">Binds challenge strictly to the exact model namespace</small>
+                    </div>
+                    <div class="form-group">
                         <label class="form-label">Benchmark Category</label>
                         <select class="form-select" id="createCategory">
                             <option value="CODING_HUMANEVAL" selected>Code Generation (HumanEval / MBPP pass@1)</option>
@@ -618,6 +623,7 @@
 
                 const contractAddr = document.getElementById('contractAddressInput').value.trim().toLowerCase();
                 const developer = document.getElementById('createDeveloperAddr').value.trim().toLowerCase();
+                const modelId = document.getElementById('createModelId').value.trim();
                 const category = document.getElementById('createCategory').value;
                 const spec = document.getElementById('createSpec').value.trim();
                 const leaderboardUrl = document.getElementById('createLeaderboardUrl').value.trim();
@@ -628,13 +634,13 @@
                 const stakeWei = BigInt(Math.floor(devStake * 1e18));
                 const durationSecs = BigInt(86400 * 7); // 7 days
 
-                addLog(`Creating ${category} benchmark challenge for ${developer}...`, 'info');
+                addLog(`Creating ${category} benchmark challenge for ${modelId} (${developer})...`, 'info');
                 addLog(`Committed leaderboard URL: ${leaderboardUrl}`, 'info');
 
                 const txHash = await client.writeContract({
                     address: contractAddr,
                     functionName: 'create_challenge',
-                    args: [developer, category, spec, leaderboardUrl, stakeWei, durationSecs],
+                    args: [developer, category, spec, leaderboardUrl, stakeWei, durationSecs, modelId],
                     value: bountyWei,
                 });
 

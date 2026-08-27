@@ -11,6 +11,8 @@ export interface ChallengeState {
   challenge_id: number;
   sponsor: string;
   model_developer: string;
+  model_identifier: string;
+  evaluator_authority: string;
   target_benchmark_category: string;
   benchmark_specification: string;
   committed_leaderboard_url: string;
@@ -23,7 +25,7 @@ export interface ChallengeState {
   adjudication_verdict: string;
   adjudication_confidence: number;
   adjudication_summary: string;
-  is_finalized: bool;
+  is_finalized: boolean;
 }
 
 export interface ProtocolStats {
@@ -68,7 +70,8 @@ export async function createChallenge(
   committedLeaderboardUrl: string,
   requiredDeveloperStakeGen: string | number,
   durationSeconds: number,
-  bountyDepositGen: string | number
+  bountyDepositGen: string | number,
+  modelIdentifier: string = ''
 ): Promise<`0x${string}`> {
   const bountyWei = BigInt(Math.floor(Number(bountyDepositGen) * 1e18));
   const stakeWei = BigInt(Math.floor(Number(requiredDeveloperStakeGen) * 1e18));
@@ -83,6 +86,7 @@ export async function createChallenge(
       committedLeaderboardUrl,
       stakeWei,
       BigInt(durationSeconds),
+      modelIdentifier,
     ],
     value: bountyWei,
   });

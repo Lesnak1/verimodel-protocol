@@ -3,7 +3,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![GenLayer Network](https://img.shields.io/badge/GenLayer-Intelligent%20Contract-00f2fe.svg)](https://docs.genlayer.com)
 [![GenVM Python](https://img.shields.io/badge/GenVM-py--genlayer%20v0.2.7-8a2be2.svg)](https://github.com/genlayerlabs)
-[![Tests: Direct Mode](https://img.shields.io/badge/Tests-Direct%20VM%20Passing%20(7%2F7)-00f5a0.svg)](#-test-suite--verification)
+[![Tests: Direct Mode](https://img.shields.io/badge/Tests-Direct%20VM%20Passing%20(9%2F9)-00f5a0.svg)](#-test-suite--verification)
 
 **VeriModel** is a decentralized, intelligent milestone evaluation and bounty escrow protocol built natively on GenLayer. It solves the reproducibility and benchmark contamination crisis in open-weight AI research by conditioning grant/prize disbursements on **decentralized multi-validator neural consensus over live authority leaderboard telemetry** (HuggingFace Open LLM Leaderboard API, LMSYS Chatbot Arena, OpenRouter, and Weights & Biases).
 
@@ -20,7 +20,8 @@ As DAOs, research foundations, and decentralized compute networks distribute mil
 GenLayer provides the only execution layer capable of evaluating off-chain AI benchmark reproducibility:
 1. **Live Authority Leaderboard Telemetry Grounding (`gl.nondet.web.get`)**: Validators independently retrieve real-time eval metrics from committed endpoints (`huggingface.co/api`, `lmarena.ai`, `openrouter.ai`).
 2. **Multi-Validator Neural Consensus (`gl.vm.run_nondet_unsafe`)**: Validators analyze benchmark scores against contracted specifications under the **Equivalence Principle** with strict canonical action decisions.
-3. **Deterministic Slashing & Exact Payout Preservation**: Slashes developer collateral upon proven benchmark falsification or awards the bounty prize upon verified reproducibility with zero financial drift.
+3. **Deterministic Slashing & Exact Payout Preservation**: Slashes developer collateral only upon verified affirmative proof of falsification/failure (confidence >= 80) or awards the bounty prize upon verified reproducibility with zero financial drift.
+4. **404 & Network Failure Retry Protection**: HTTP 404s, missing endpoints, or server errors are strictly treated as retry outcomes (`EXTEND_EVAL_WINDOW`), NEVER as grounds for slashing.
 
 ---
 
@@ -31,8 +32,8 @@ To eliminate numeric drift and ambiguous threshold crossings, VeriModel enforces
 | Canonical Action Decision | Validation Criteria | On-Chain Execution |
 |---|---|---|
 | **`RELEASE_BOUNTY`** | `benchmark_achieved == True` AND `confidence_score >= 80` | Releases bounty prize + stake refund to Developer (`emit_transfer(bounty + stake)`) |
-| **`SLASH_CHALLENGE`** | Falsified evals / contaminated benchmark / failed scores | Slashes developer stake + refunds bounty to Sponsor (`emit_transfer(bounty + stake)`) |
-| **`EXTEND_EVAL_WINDOW`** | In-progress eval runs (`confidence_score < 80`) | Challenge remains active for retry; zero funds released |
+| **`SLASH_CHALLENGE`** | Verified affirmative benchmark falsification / contamination AND `confidence_score >= 80` | Slashes developer stake + refunds bounty to Sponsor (`emit_transfer(bounty + stake)`) |
+| **`EXTEND_EVAL_WINDOW`** | In-progress eval runs, HTTP 404s, network errors, or sub-threshold confidence (`confidence < 80`) | Challenge remains active for retry; zero funds released |
 
 ### Key Security & Solvency Invariants:
 1. **🗓️ Fail-Closed Runtime Block Timing**: Timestamps are strictly derived from enforceable GenLayer runtime block state (`_get_runtime_timestamp()`). Unavailable timestamps strictly fail closed.
@@ -157,23 +158,29 @@ pytest
 pytest tests/direct/ -v
 ```
 
-### Verified Test Scenarios (7 Tests):
+### Verified Test Scenarios (9/9 Tests Passing):
 1. `test_benchmark_success_and_bounty_release`:
    - Sponsor creates challenge with 100 GEN bounty. Developer deposits 30 GEN stake.
    - Live telemetry proves 84.6% HumanEval (>80% target).
    - Consensus on `RELEASE_BOUNTY` (conf: 96) -> 130 GEN released to Developer.
-2. `test_benchmark_falsification_slashing` (Adversarial):
+2. `test_repeated_404_responses_leave_challenge_active_and_move_no_funds`:
+   - Multiple consecutive HTTP 404s and server errors strictly return `EXTEND_EVAL_WINDOW`.
+   - Leaves challenge status `ACTIVE`, `is_finalized` False, and moves exactly 0 funds.
+3. `test_sub_threshold_confidence_cannot_slash_and_moves_no_funds`:
+   - Sub-threshold confidence (<80%) is strictly normalized to `EXTEND_EVAL_WINDOW`.
+   - Prevents premature slashing on ambiguous evidence, moving 0 funds.
+4. `test_benchmark_falsification_slashing_with_high_confidence` (Adversarial):
    - Developer submits falsified/contaminated benchmark (52.4% vs 80% target).
-   - Consensus on `SLASH_CHALLENGE` (conf: 98) -> 130 GEN awarded to Sponsor.
-3. `test_in_progress_eval_grace_period_extension`:
+   - Consensus on `SLASH_CHALLENGE` with high confidence (conf: 98 >= 80) -> 130 GEN awarded to Sponsor.
+5. `test_in_progress_eval_grace_period_extension`:
    - Queued or in-progress runs trigger `EXTEND_EVAL_WINDOW` without releasing funds.
-4. `test_mismatched_leaderboard_url_reverts` (Adversarial):
+6. `test_mismatched_leaderboard_url_reverts` (Adversarial):
    - Reverts when caller attempts to submit an uncommitted URL during adjudication.
-5. `test_untrusted_domain_spoofing_reverts` (Adversarial):
+7. `test_untrusted_domain_spoofing_reverts` (Adversarial):
    - Rejects hostname substring spoofing attempts (e.g. `huggingface.co.attacker.com`).
-6. `test_unauthorized_early_release_reverts` (Fail-Closed):
+8. `test_unauthorized_early_release_reverts` (Fail-Closed):
    - Verifies active challenges cannot be released before expiration.
-7. `test_non_developer_stake_reverts` (Access Control):
+9. `test_non_developer_stake_reverts` (Access Control):
    - Enforces that only the designated developer can deposit collateral.
 
 ---
