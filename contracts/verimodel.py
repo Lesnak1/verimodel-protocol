@@ -299,39 +299,64 @@ class VeriModel(gl.Contract):
                     "summary": f"[EXTERNAL] Authority leaderboard fetch failed with network error: {str(e)[:100]}; held for retry.",
                 }
 
-            # Strict Fetch Success Validation (Fail Closed): Must return explicit HTTP 200-299 status
-            # All 404s, 500s, and non-2xx status codes are strictly treated as retry outcomes (EXTEND_EVAL_WINDOW), NEVER slashing
+            # Strict Fetch Success Validation (Fail Closed): Must return a valid, explicit HTTP 200-299 status code.
+            # Any missing, non-integer, malformed, 404, 500, or non-2xx status code is strictly treated as a retry outcome (EXTEND_EVAL_WINDOW),
+            # immediately terminating execution before reaching LLM adjudication and moving zero funds.
             http_status = None
             if hasattr(res, "status") and res.status is not None:
                 http_status = res.status
             elif hasattr(res, "status_code") and res.status_code is not None:
                 http_status = res.status_code
-            elif isinstance(res, dict) and "status" in res:
+            elif isinstance(res, dict) and "status" in res and res["status"] is not None:
                 http_status = res["status"]
-            elif isinstance(res, dict) and "status_code" in res:
+            elif isinstance(res, dict) and "status_code" in res and res["status_code"] is not None:
                 http_status = res["status_code"]
 
-            if http_status is not None:
-                try:
-                    code = int(http_status)
-                    if code < 200 or code >= 300:
-                        return {
-                            "action_decision": "EXTEND_EVAL_WINDOW",
-                            "confidence_score": 0,
-                            "benchmark_achieved": False,
-                            "summary": f"[EXTERNAL] Authority leaderboard endpoint returned HTTP status {code}; treated as retry outcome without moving funds.",
-                        }
-                except (ValueError, TypeError):
-                    pass
+            # Fail Closed: Missing HTTP status cannot proceed into LLM adjudication
+            if http_status is None:
+                return {
+                    "action_decision": "EXTEND_EVAL_WINDOW",
+                    "confidence_score": 0,
+                    "benchmark_achieved": False,
+                    "summary": "[EXTERNAL] Missing HTTP response status from authority endpoint; treated as retry outcome without moving funds.",
+                }
+
+            # Fail Closed: Malformed / non-integer HTTP status cannot proceed into LLM adjudication
+            try:
+                code = int(http_status)
+            except (ValueError, TypeError):
+                return {
+                    "action_decision": "EXTEND_EVAL_WINDOW",
+                    "confidence_score": 0,
+                    "benchmark_achieved": False,
+                    "summary": f"[EXTERNAL] Malformed HTTP response status '{http_status}'; treated as retry outcome without moving funds.",
+                }
+
+            # Fail Closed: 404s, 500s, and non-2xx status codes strictly force retry
+            if code < 200 or code >= 300:
+                return {
+                    "action_decision": "EXTEND_EVAL_WINDOW",
+                    "confidence_score": 0,
+                    "benchmark_achieved": False,
+                    "summary": f"[EXTERNAL] Authority leaderboard endpoint returned HTTP status {code}; treated as retry outcome without moving funds.",
+                }
 
             raw_body = getattr(res, "body", None)
             if raw_body is None and isinstance(res, dict):
-                raw_body = res.get("body", "")
+                raw_body = res.get("body", None)
+
+            if raw_body is None:
+                return {
+                    "action_decision": "EXTEND_EVAL_WINDOW",
+                    "confidence_score": 0,
+                    "benchmark_achieved": False,
+                    "summary": "[EXTERNAL] Authority endpoint returned null/missing body data; held for retry.",
+                }
 
             if isinstance(raw_body, bytes):
                 leaderboard_data = raw_body.decode("utf-8", errors="replace")[:3000]
             else:
-                leaderboard_data = str(raw_body or res)[:3000]
+                leaderboard_data = str(raw_body)[:3000]
 
             if not leaderboard_data.strip():
                 return {

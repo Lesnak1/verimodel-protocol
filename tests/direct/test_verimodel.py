@@ -446,3 +446,115 @@ def test_non_developer_stake_reverts(
 
     with direct_vm.expect_revert("Only the designated model developer can deposit challenge stake."):
         contract.stake_and_enter_challenge(chal_id)
+
+
+def test_missing_or_malformed_http_status_strictly_forces_retry_and_never_slashes(
+    direct_vm, direct_deploy, direct_alice, direct_bob
+):
+    """
+    Steward Verification Test (Gen. Dave):
+    Proves that a missing or malformed HTTP response status (e.g. status: None, status: 'invalid')
+    strictly terminates before LLM adjudication and returns EXTEND_EVAL_WINDOW (retry outcome),
+    preventing any high-confidence slash or unauthorized escrow transfer.
+    """
+    contract = direct_deploy("contracts/verimodel.py")
+
+    # Step 1: Alice creates challenge with 50 GEN bounty
+    direct_vm.sender = direct_alice
+    direct_vm.value = 50 * 10**18
+    committed_url = "https://huggingface.co/api/models/open-llm-leaderboard/evals/status-edge-model"
+
+    chal_id = contract.create_challenge(
+        str(direct_bob),
+        "CODING_HUMANEVAL",
+        "Achieve HumanEval >= 80.0%",
+        committed_url,
+        20 * 10**18,
+        604800,
+        "status-edge-model",
+    )
+
+    # Step 2: Bob stakes 20 GEN collateral
+    direct_vm.sender = direct_bob
+    direct_vm.value = 20 * 10**18
+    contract.stake_and_enter_challenge(chal_id)
+
+    stats_before = contract.get_protocol_stats()
+    expected_liabilities = str(70 * 10**18)
+    assert stats_before["total_active_liabilities"] == expected_liabilities
+
+    # Case A: Missing status (status is None / missing)
+    direct_vm.mock_web(
+        r".*",
+        {"body": "Corrupted response without HTTP status code"},
+    )
+    direct_vm.sender = direct_alice
+    contract.adjudicate_benchmark(chal_id, "Attempt with missing HTTP status", committed_url)
+
+    c_missing = contract.get_challenge(chal_id)
+    assert c_missing["status"] == "ACTIVE", "Challenge must remain ACTIVE on missing status"
+    assert c_missing["is_finalized"] is False, "Challenge must NOT reach finality"
+    assert c_missing["adjudication_verdict"] == "EXTEND_EVAL_WINDOW"
+    assert c_missing["adjudication_confidence"] == 0
+    assert "Missing HTTP response status" in c_missing["adjudication_summary"]
+    assert contract.get_protocol_stats()["total_active_liabilities"] == expected_liabilities
+
+    # Case B: Malformed status (status is non-integer string 'invalid_status')
+    direct_vm.mock_web(
+        r".*",
+        {"status": "invalid_status", "body": "Non-integer status string"},
+    )
+    direct_vm.sender = direct_bob
+    contract.adjudicate_benchmark(chal_id, "Attempt with malformed status string", committed_url)
+
+    c_malformed = contract.get_challenge(chal_id)
+    assert c_malformed["status"] == "ACTIVE", "Challenge must remain ACTIVE on malformed status"
+    assert c_malformed["is_finalized"] is False
+    assert c_malformed["adjudication_verdict"] == "EXTEND_EVAL_WINDOW"
+    assert c_malformed["adjudication_confidence"] == 0
+    assert "Malformed HTTP response status" in c_malformed["adjudication_summary"]
+    assert contract.get_protocol_stats()["total_active_liabilities"] == expected_liabilities
+
+
+def test_null_or_empty_body_strictly_forces_retry_and_never_slashes(
+    direct_vm, direct_deploy, direct_alice, direct_bob
+):
+    """
+    Test that null/missing or whitespace-only response bodies strictly return EXTEND_EVAL_WINDOW
+    and never slash.
+    """
+    contract = direct_deploy("contracts/verimodel.py")
+
+    direct_vm.sender = direct_alice
+    direct_vm.value = 50 * 10**18
+    committed_url = "https://huggingface.co/api/models/open-llm-leaderboard/evals/empty-body-model"
+
+    chal_id = contract.create_challenge(
+        str(direct_bob),
+        "CODING_HUMANEVAL",
+        "Achieve HumanEval >= 80.0%",
+        committed_url,
+        20 * 10**18,
+        604800,
+        "empty-body-model",
+    )
+
+    direct_vm.sender = direct_bob
+    direct_vm.value = 20 * 10**18
+    contract.stake_and_enter_challenge(chal_id)
+
+    # Mock HTTP 200 with null body
+    direct_vm.mock_web(
+        r".*",
+        {"status": 200, "body": None},
+    )
+    direct_vm.sender = direct_alice
+    contract.adjudicate_benchmark(chal_id, "Attempt with null body", committed_url)
+
+    c_null = contract.get_challenge(chal_id)
+    assert c_null["status"] == "ACTIVE"
+    assert c_null["is_finalized"] is False
+    assert c_null["adjudication_verdict"] == "EXTEND_EVAL_WINDOW"
+    assert c_null["adjudication_confidence"] == 0
+    assert "null/missing body data" in c_null["adjudication_summary"]
+
