@@ -10,8 +10,8 @@
     <style>
         :root {
             --bg-page: #06080e;
-            --bg-card: rgba(12, 17, 29, 0.92);
-            --bg-card-inner: rgba(0, 0, 0, 0.45);
+            --bg-card: rgba(12, 17, 29, 0.94);
+            --bg-card-inner: rgba(0, 0, 0, 0.5);
             --border-card: rgba(255, 255, 255, 0.08);
             --border-highlight: rgba(0, 245, 160, 0.35);
             --accent-cyan: #00f2fe;
@@ -94,6 +94,39 @@
             flex-wrap: wrap;
         }
 
+        .mode-toggle-group {
+            display: flex;
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 30px;
+            padding: 3px;
+        }
+
+        .mode-btn {
+            padding: 6px 14px;
+            border-radius: 24px;
+            border: none;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: #94a3b8;
+            background: transparent;
+            font-family: var(--font-sans);
+        }
+
+        .mode-btn.active-live {
+            background: linear-gradient(135deg, #00f2fe, #4facfe);
+            color: #06080e;
+            box-shadow: 0 0 12px rgba(0, 242, 254, 0.4);
+        }
+
+        .mode-btn.active-sim {
+            background: linear-gradient(135deg, #00f5a0, #00d2ff);
+            color: #06080e;
+            box-shadow: 0 0 12px rgba(0, 245, 160, 0.4);
+        }
+
         .network-badge {
             display: flex;
             align-items: center;
@@ -125,11 +158,11 @@
         /* Hero */
         .hero {
             text-align: center;
-            padding: 16px 10px 4px;
+            padding: 14px 10px 0;
         }
 
         .hero h1 {
-            font-size: 30px;
+            font-size: 28px;
             font-weight: 800;
             letter-spacing: -0.5px;
             margin-bottom: 6px;
@@ -142,7 +175,7 @@
         .hero p {
             color: #94a3b8;
             font-size: 13.5px;
-            max-width: 780px;
+            max-width: 800px;
             margin: 0 auto;
             line-height: 1.5;
         }
@@ -155,8 +188,8 @@
         }
 
         .inv-card {
-            background: rgba(0, 0, 0, 0.35);
-            border: 1px solid rgba(255, 255, 255, 0.05);
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.06);
             border-radius: 12px;
             padding: 10px 14px;
             display: flex;
@@ -165,20 +198,9 @@
             font-size: 12px;
         }
 
-        .inv-icon {
-            font-size: 18px;
-        }
-
-        .inv-text strong {
-            display: block;
-            color: #f1f5f9;
-            font-size: 12px;
-        }
-
-        .inv-text span {
-            color: #94a3b8;
-            font-size: 11px;
-        }
+        .inv-icon { font-size: 18px; }
+        .inv-text strong { display: block; color: #f1f5f9; font-size: 12px; }
+        .inv-text span { color: #94a3b8; font-size: 11px; }
 
         /* Grid */
         .dashboard-grid {
@@ -200,78 +222,89 @@
             backdrop-filter: blur(20px);
             display: flex;
             flex-direction: column;
-            gap: 18px;
+            gap: 16px;
         }
 
         .card-header {
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            justify-content: space-between;
             padding-bottom: 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
         }
 
         .card-title {
-            font-size: 15px;
+            font-size: 16px;
             font-weight: 700;
-            color: #f1f5f9;
             display: flex;
             align-items: center;
             gap: 8px;
+            color: #ffffff;
+        }
+
+        /* Mode Banner Inside Cards */
+        .mode-banner {
+            padding: 8px 12px;
+            border-radius: 10px;
+            font-size: 11.5px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .mode-banner.live-mode {
+            background: rgba(0, 242, 254, 0.08);
+            border: 1px solid rgba(0, 242, 254, 0.25);
+            color: var(--accent-cyan);
+        }
+
+        .mode-banner.sim-mode {
+            background: rgba(0, 245, 160, 0.08);
+            border: 1px solid rgba(0, 245, 160, 0.25);
+            color: var(--accent-emerald);
         }
 
         /* Persona Switcher */
-        .persona-bar {
+        .persona-switcher {
             display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background: rgba(0, 0, 0, 0.4);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            border-radius: 14px;
-            padding: 10px 14px;
-            flex-wrap: wrap;
             gap: 8px;
-        }
-
-        .persona-label {
-            font-size: 11.5px;
-            color: #94a3b8;
-            font-weight: 600;
-        }
-
-        .persona-buttons {
-            display: flex;
-            gap: 6px;
+            background: var(--bg-card-inner);
+            padding: 6px;
+            border-radius: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
         }
 
         .persona-btn {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            color: #cbd5e1;
-            padding: 4px 10px;
-            border-radius: 8px;
-            font-size: 11px;
+            flex: 1;
+            padding: 8px 10px;
+            border-radius: 10px;
+            border: none;
+            background: transparent;
+            color: #94a3b8;
+            font-size: 12px;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .persona-btn:hover {
-            background: rgba(255, 255, 255, 0.1);
-            color: #fff;
+            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
         }
 
         .persona-btn.active {
-            background: var(--accent-cyan);
-            color: #000;
-            border-color: var(--accent-cyan);
+            background: rgba(255, 255, 255, 0.08);
+            color: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.15);
         }
+
+        .persona-role { font-size: 10px; opacity: 0.7; }
 
         /* Tabs */
         .tabs-header {
             display: flex;
             gap: 6px;
-            background: rgba(0, 0, 0, 0.35);
+            background: var(--bg-card-inner);
             padding: 4px;
             border-radius: 12px;
             border: 1px solid rgba(255, 255, 255, 0.05);
@@ -279,28 +312,26 @@
 
         .tab-btn {
             flex: 1;
-            background: transparent;
+            padding: 8px 12px;
+            border-radius: 8px;
             border: none;
+            background: transparent;
             color: #94a3b8;
-            padding: 8px 10px;
             font-size: 12px;
             font-weight: 600;
-            border-radius: 8px;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: all 0.2s;
         }
 
-        .tab-btn:hover { color: #fff; }
         .tab-btn.active {
             background: rgba(255, 255, 255, 0.1);
-            color: #fff;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            color: #ffffff;
         }
 
-        .tab-pane { display: none; flex-direction: column; gap: 14px; }
-        .tab-pane.active { display: flex; }
+        .tab-pane { display: none; }
+        .tab-pane.active { display: flex; flex-direction: column; gap: 14px; }
 
-        /* Form */
+        /* Form Inputs */
         .form-group {
             display: flex;
             flex-direction: column;
@@ -308,128 +339,125 @@
         }
 
         .form-label {
-            font-size: 12px;
+            font-size: 11.5px;
             font-weight: 600;
-            color: #cbd5e1;
+            color: #94a3b8;
+            display: flex;
+            justify-content: space-between;
         }
 
-        .form-input, .form-select, .form-textarea {
+        .form-input, .form-textarea, .form-select {
             background: var(--bg-card-inner);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.08);
             border-radius: 10px;
-            padding: 10px 12px;
-            color: #fff;
-            font-family: inherit;
+            padding: 9px 12px;
+            color: #f8fafc;
             font-size: 12.5px;
+            font-family: var(--font-sans);
             outline: none;
-            transition: border-color 0.2s ease;
+            transition: border-color 0.2s;
+            width: 100%;
         }
 
-        .form-input:focus, .form-select:focus, .form-textarea:focus {
+        .form-input:focus, .form-textarea:focus, .form-select:focus {
             border-color: var(--accent-cyan);
         }
 
-        .form-textarea {
-            resize: vertical;
-            min-height: 60px;
-        }
+        .form-textarea { min-height: 60px; resize: vertical; }
 
+        /* Action Buttons */
         .btn-action {
-            background: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%);
-            color: #040d1a;
-            border: none;
-            border-radius: 12px;
             padding: 12px;
-            font-size: 13.5px;
+            border-radius: 12px;
+            border: none;
+            font-size: 13px;
             font-weight: 700;
             cursor: pointer;
-            transition: transform 0.15s ease, opacity 0.15s ease;
+            transition: all 0.2s;
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 8px;
-            box-shadow: 0 4px 15px rgba(0, 242, 254, 0.2);
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
+            color: #06080e;
+            box-shadow: 0 4px 15px rgba(0, 242, 254, 0.25);
         }
 
-        .btn-action:hover {
+        .btn-action:hover:not(:disabled) {
             transform: translateY(-1px);
-            opacity: 0.95;
+            box-shadow: 0 6px 20px rgba(0, 242, 254, 0.35);
         }
 
         .btn-action:disabled {
-            opacity: 0.5;
+            opacity: 0.6;
             cursor: not-allowed;
             transform: none;
         }
 
-        /* Score Matrix */
-        .score-matrix {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.06);
+            color: #ffffff;
+            box-shadow: none;
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
-        .score-box {
-            background: var(--bg-card-inner);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            border-radius: 14px;
-            padding: 14px;
-            text-align: center;
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
+        .btn-secondary:hover:not(:disabled) {
+            background: rgba(255, 255, 255, 0.1);
+            box-shadow: none;
         }
-
-        .score-value {
-            font-size: 24px;
-            font-weight: 800;
-            font-family: var(--font-mono);
-            color: var(--accent-cyan);
-        }
-
-        .score-label {
-            font-size: 11px;
-            color: #94a3b8;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        /* Info Panel */
-        .info-panel {
-            background: var(--bg-card-inner);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            border-radius: 14px;
-            padding: 14px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            font-size: 12.5px;
-        }
-
-        .info-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .info-k { color: #94a3b8; font-weight: 500; }
-        .info-v { color: #f8fafc; font-weight: 600; font-family: var(--font-mono); }
 
         /* Status Pills */
         .status-pill {
-            padding: 3px 10px;
+            padding: 4px 10px;
             border-radius: 20px;
             font-size: 11px;
             font-weight: 700;
             text-transform: uppercase;
         }
 
-        .status-pending { background: rgba(245, 158, 11, 0.15); color: var(--accent-amber); border: 1px solid rgba(245, 158, 11, 0.3); }
         .status-active { background: rgba(0, 242, 254, 0.15); color: var(--accent-cyan); border: 1px solid rgba(0, 242, 254, 0.3); }
         .status-released { background: rgba(0, 245, 160, 0.15); color: var(--accent-emerald); border: 1px solid rgba(0, 245, 160, 0.3); }
         .status-slashed { background: rgba(244, 63, 94, 0.15); color: var(--accent-rose); border: 1px solid rgba(244, 63, 94, 0.3); }
+        .status-pending { background: rgba(245, 158, 11, 0.15); color: var(--accent-amber); border: 1px solid rgba(245, 158, 11, 0.3); }
+
+        /* Info Display */
+        .info-panel {
+            background: var(--bg-card-inner);
+            border-radius: 12px;
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+        }
+
+        .info-k { color: #94a3b8; }
+        .info-v { font-weight: 600; color: #f8fafc; font-family: var(--font-mono); }
+
+        /* Score Matrix */
+        .score-matrix {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .score-box {
+            background: var(--bg-card-inner);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 12px;
+            padding: 10px;
+            text-align: center;
+        }
+
+        .score-value { font-size: 20px; font-weight: 800; color: var(--accent-cyan); font-family: var(--font-mono); }
+        .score-label { font-size: 11px; color: #94a3b8; margin-top: 2px; }
 
         /* Audit Log */
         .audit-log {
@@ -437,21 +465,22 @@
             border: 1px solid rgba(255, 255, 255, 0.08);
             border-radius: 12px;
             padding: 12px;
+            height: 180px;
+            overflow-y: auto;
             font-family: var(--font-mono);
             font-size: 11px;
-            max-height: 160px;
-            overflow-y: auto;
             display: flex;
             flex-direction: column;
-            gap: 6px;
+            gap: 5px;
         }
 
-        .log-entry { color: #cbd5e1; line-height: 1.4; word-break: break-all; }
-        .log-time { color: #64748b; }
+        .log-entry { line-height: 1.4; color: #cbd5e1; }
+        .log-time { color: #64748b; margin-right: 6px; }
         .log-ok { color: var(--accent-emerald); }
-        .log-info { color: var(--accent-cyan); }
+        .log-err { color: var(--accent-rose); font-weight: 600; }
         .log-warn { color: var(--accent-amber); }
-        .log-err { color: var(--accent-rose); }
+        .log-info { color: var(--accent-cyan); }
+        .log-sim { color: #a78bfa; font-weight: 600; }
     </style>
 </head>
 <body>
@@ -461,120 +490,157 @@
         <!-- Navbar -->
         <nav>
             <div class="brand-logo">
-                <span>🛡️</span> VeriModel Protocol
+                <span>🛡️ VeriModel Protocol</span>
             </div>
+
             <div class="nav-controls">
-                <select class="form-select" id="networkSelect" style="padding: 6px 12px; font-size: 12px;">
-                    <option value="studionet" selected>GenLayer Studio Network</option>
-                    <option value="testnetBradbury">GenLayer Bradbury Testnet</option>
-                    <option value="localnet">Local GenVM Sandbox</option>
-                </select>
-                <div class="network-badge" id="netBadge">
-                    <div class="pulse-dot"></div> Connected
+                <!-- Mode Selector -->
+                <div class="mode-toggle-group">
+                    <button class="mode-btn active-live" id="btnModeLive" onclick="setAppMode('live')">
+                        🌐 Live Network (RPC)
+                    </button>
+                    <button class="mode-btn" id="btnModeSim" onclick="setAppMode('sim')">
+                        🔬 GenVM Simulator
+                    </button>
                 </div>
-                <div class="network-badge" id="accountBadge" style="border-color: rgba(255,255,255,0.15); color: #fff;">
-                    0x...
+
+                <select class="form-select" id="networkSelect" style="width: auto; padding: 6px 12px; font-size: 12px;">
+                    <option value="testnetBradbury">Bradbury Testnet</option>
+                    <option value="studionet">Studio Network</option>
+                    <option value="localnet">Localnet (localhost:4000)</option>
+                </select>
+
+                <div class="network-badge" id="netBadge">
+                    <div class="pulse-dot"></div> Bradbury Testnet
+                </div>
+
+                <div class="network-badge" id="accountBadge" style="color: #cbd5e1; border-color: rgba(255,255,255,0.15);">
+                    0x7099...79C8
                 </div>
             </div>
         </nav>
 
-        <!-- Invariants Guarantee Banner -->
-        <div class="invariants-banner">
-            <div class="inv-card">
-                <div class="inv-icon">🔒</div>
-                <div class="inv-text">
-                    <strong>Fail-Closed HTTP 404 / 500 Safety</strong>
-                    <span>Missing/error endpoints strictly retry; 0 funds move</span>
-                </div>
-            </div>
-            <div class="inv-card">
-                <div class="inv-icon">⚖️</div>
-                <div class="inv-text">
-                    <strong>Meaningful Confidence Floor (>=80)</strong>
-                    <span>Sub-threshold confidence strictly normalized to retry</span>
-                </div>
-            </div>
-            <div class="inv-card">
-                <div class="inv-icon">🔗</div>
-                <div class="inv-text">
-                    <strong>Authority Source Binding</strong>
-                    <span>Strict on-chain model_identifier & domain whitelisting</span>
-                </div>
-            </div>
-        </div>
-
         <!-- Hero -->
         <div class="hero">
-            <h1>Decentralized AI Model Benchmark & Eval Escrow</h1>
-            <p>Trustless evaluation and milestone grant escrow for open-weights AI models, LLMs, and research labs. Multi-validator neural consensus adjudicates live HuggingFace and LMSYS Arena leaderboards with exact payout preservation.</p>
+            <h1>Trustless AI Model Benchmark & Bounty Escrow</h1>
+            <p>
+                Eliminating the reproducibility crisis in open-weight AI grants via GenLayer Intelligent Contracts, multi-validator leaderboard telemetry consensus, and fail-closed safety invariants.
+            </p>
         </div>
 
-        <!-- Dashboard Grid -->
+        <!-- Invariants Banner -->
+        <div class="invariants-banner">
+            <div class="inv-card">
+                <span class="inv-icon">🔄</span>
+                <div class="inv-text">
+                    <strong>404 & Network Failure Safety</strong>
+                    <span>Non-2xx HTTP responses force retry; never slash.</span>
+                </div>
+            </div>
+            <div class="inv-card">
+                <span class="inv-icon">🎯</span>
+                <div class="inv-text">
+                    <strong>Confidence Floor (≥80%)</strong>
+                    <span>Strict consensus floor required for payout or slashing.</span>
+                </div>
+            </div>
+            <div class="inv-card">
+                <span class="inv-icon">🔒</span>
+                <div class="inv-text">
+                    <strong>Committed Source Binding</strong>
+                    <span>Whitelisted authorities (HuggingFace, LMSYS Arena).</span>
+                </div>
+            </div>
+            <div class="inv-card">
+                <span class="inv-icon">⚖️</span>
+                <div class="inv-text">
+                    <strong>Equivalence Principle</strong>
+                    <span>Multi-LLM validator consensus reaches deterministic settlement.</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Dashboard -->
         <div class="dashboard-grid">
-            <!-- Left Card: Protocol Actions -->
+            <!-- Left Card: Actions -->
             <div class="card">
                 <div class="card-header">
-                    <div class="card-title">🔬 Benchmark Challenge Operations</div>
-                    <span class="status-pill status-active" id="opStatusPill">Live Engine</span>
-                </div>
-
-                <!-- Persona Switcher -->
-                <div class="persona-bar">
-                    <span class="persona-label">Active Role: <span id="activeRoleName" style="color: #fff;">Sponsor (Alice)</span> (<span id="activeRoleAddr" style="font-family: var(--font-mono); font-size: 11px;">0x7099...79C8</span>)</span>
-                    <div class="persona-buttons">
-                        <button class="persona-btn active" id="btnRoleSponsor" onclick="setSigningPersona('sponsor')">Sponsor (Alice)</button>
-                        <button class="persona-btn" id="btnRoleDeveloper" onclick="setSigningPersona('developer')">Developer (Bob)</button>
-                        <button class="persona-btn" id="btnRoleCustom" onclick="setSigningPersona('custom')">Custom Key</button>
+                    <div class="card-title">⚙️ Protocol Operations</div>
+                    <div class="mode-banner live-mode" id="cardModeIndicator">
+                        🌐 Live On-Chain RPC Mode
                     </div>
                 </div>
 
+                <!-- Persona Switcher -->
+                <div class="persona-switcher">
+                    <button class="persona-btn active" id="btnRoleSponsor" onclick="setSigningPersona('sponsor')">
+                        <span>Alice (Sponsor)</span>
+                        <span class="persona-role">Grant Funder</span>
+                    </button>
+                    <button class="persona-btn" id="btnRoleDeveloper" onclick="setSigningPersona('developer')">
+                        <span>Bob (Developer)</span>
+                        <span class="persona-role">Open-Weights Lab</span>
+                    </button>
+                    <button class="persona-btn" id="btnRoleCustom" onclick="setSigningPersona('custom')">
+                        <span>Custom Account</span>
+                        <span class="persona-role">Manual Signer</span>
+                    </button>
+                </div>
+
+                <div class="info-row" style="padding: 0 4px;">
+                    <span class="info-k">Signer: <strong id="activeRoleName" style="color:#f8fafc;">Alice (Sponsor)</strong></span>
+                    <span class="info-v" id="activeRoleAddr" style="color:var(--accent-cyan);">0x7099...79C8</span>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">
+                        <span>Contract Address</span>
+                        <span id="contractSourceHint" style="font-size: 10.5px; color: #94a3b8;">(GenLayer Intelligent Contract)</span>
+                    </label>
+                    <input type="text" class="form-input" id="contractAddressInput" value="0x82d461f320188047915512702759902641203002">
+                </div>
+
+                <!-- Tabs -->
                 <div class="tabs-header">
                     <button class="tab-btn active" onclick="switchTab('tab-create')">1. Create Bounty</button>
                     <button class="tab-btn" onclick="switchTab('tab-stake')">2. Stake & Enter</button>
-                    <button class="tab-btn" onclick="switchTab('tab-adjudicate')">3. Adjudicate Evals</button>
+                    <button class="tab-btn" onclick="switchTab('tab-adjudicate')">3. Adjudicate</button>
                 </div>
 
                 <!-- Tab 1: Create Challenge -->
                 <div class="tab-pane active" id="tab-create">
                     <div class="form-group">
-                        <label class="form-label">Contract Address</label>
-                        <input type="text" class="form-input" id="contractAddressInput" value="0xa16E7527Cb181530E47636c29eE9A8C377FC0e0b">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Model Developer Address</label>
-                        <input type="text" class="form-input" id="createDeveloperAddr" value="0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Challenged Model Identifier</label>
+                        <label class="form-label">Target Model Identifier</label>
                         <input type="text" class="form-input" id="createModelId" value="meta-llama/Llama-3.1-8B-Instruct">
-                        <small style="color: var(--accent-cyan); font-size: 11px;">Binds challenge strictly to the exact model namespace</small>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Model Developer Address (Recipient)</label>
+                        <input type="text" class="form-input" id="createDeveloperAddr" value="0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC">
                     </div>
                     <div class="form-group">
                         <label class="form-label">Benchmark Category</label>
                         <select class="form-select" id="createCategory">
-                            <option value="CODING_HUMANEVAL" selected>Code Generation (HumanEval / MBPP pass@1)</option>
-                            <option value="REASONING_MATH_MMLU">Complex Reasoning & Math (MMLU / GSM8K)</option>
-                            <option value="SAFETY_ALIGNMENT">Safety & Alignment (Do-Not-Answer / RedTeaming)</option>
-                            <option value="LOW_LATENCY_EDGE">Edge Inference Latency & Quantization</option>
+                            <option value="CODING_HUMANEVAL">Coding (HumanEval / MBPP)</option>
+                            <option value="REASONING_MMLU">Reasoning (MMLU-Pro / GSM8k)</option>
+                            <option value="ARENA_ELO">LMSYS Chatbot Arena ELO</option>
                         </select>
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Required Benchmark Metrics & Criteria</label>
-                        <textarea class="form-textarea" id="createSpec">Achieve HumanEval pass@1 >= 80.0% and MBPP >= 75.0% on public open-weights evaluation harness without benchmark contamination.</textarea>
+                        <label class="form-label">Benchmark Specification Criteria</label>
+                        <input type="text" class="form-input" id="createSpec" value="Achieve HumanEval pass@1 >= 80.0% on public open-weights harness.">
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Committed Authority Leaderboard URL (Whitelisted)</label>
+                        <label class="form-label">Committed Leaderboard Authority URL</label>
                         <input type="text" class="form-input" id="createLeaderboardUrl" value="https://huggingface.co/api/models/open-llm-leaderboard/evals/deep-coder-v2">
-                        <small style="color: var(--accent-cyan); font-size: 11px;">Whitelisted: huggingface.co, lmarena.ai, openrouter.ai, github.com</small>
                     </div>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                         <div class="form-group">
-                            <label class="form-label">Bounty Prize Escrow (GEN)</label>
-                            <input type="number" step="0.1" class="form-input" id="createBountyEscrow" value="100.0">
+                            <label class="form-label">Bounty Escrow (GEN)</label>
+                            <input type="number" class="form-input" id="createBountyEscrow" value="100.00" step="0.1">
                         </div>
                         <div class="form-group">
-                            <label class="form-label">Required Developer Stake (GEN)</label>
-                            <input type="number" step="0.1" class="form-input" id="createDeveloperStake" value="30.0">
+                            <label class="form-label">Required Dev Stake (GEN)</label>
+                            <input type="number" class="form-input" id="createDeveloperStake" value="30.00" step="0.1">
                         </div>
                     </div>
                     <button class="btn-action" id="btnCreateChallenge">
@@ -582,16 +648,15 @@
                     </button>
                 </div>
 
-                <!-- Tab 2: Stake Collateral -->
+                <!-- Tab 2: Stake & Enter -->
                 <div class="tab-pane" id="tab-stake">
                     <div class="form-group">
                         <label class="form-label">Challenge ID</label>
                         <input type="number" class="form-input" id="stakeChallengeId" value="0">
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Developer Stake Deposit (GEN)</label>
-                        <input type="number" step="0.1" class="form-input" id="stakeAmount" value="30.0">
-                        <small style="color: #94a3b8; font-size: 11px;">Developer stake is locked on-chain and slashed if benchmark evals are falsified.</small>
+                        <label class="form-label">Developer Stake Amount (GEN)</label>
+                        <input type="number" class="form-input" id="stakeAmount" value="30.00">
                     </div>
                     <button class="btn-action" id="btnStakeChallenge">
                         🛡️ Deposit Stake & Activate Challenge
@@ -605,7 +670,7 @@
                         <input type="number" class="form-input" id="adjChallengeId" value="0">
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Evaluation Notes & Run Hashes</label>
+                        <label class="form-label">Evaluation Notes & Run Telemetry</label>
                         <textarea class="form-textarea" id="adjNotes">Official HuggingFace Leaderboard evaluation completed. Model scored 84.6% HumanEval pass@1.</textarea>
                     </div>
                     <div class="form-group">
@@ -621,19 +686,19 @@
             <!-- Right Card: Live Contract State -->
             <div class="card">
                 <div class="card-header">
-                    <div class="card-title">📊 Live On-Chain Challenge State</div>
-                    <button class="btn-action" id="btnRefreshState" style="padding: 6px 12px; font-size: 12px; background: rgba(255,255,255,0.08); color: #fff;">
-                        🔄 Refresh
+                    <div class="card-title">📊 Challenge State & Consensus</div>
+                    <button class="btn-action btn-secondary" id="btnRefreshState" style="padding: 6px 12px; font-size: 12px;">
+                        🔄 Read State
                     </button>
                 </div>
 
                 <div class="score-matrix">
                     <div class="score-box">
-                        <span class="score-value" id="dispConfidence">96%</span>
+                        <span class="score-value" id="dispConfidence">--</span>
                         <span class="score-label">Consensus Confidence</span>
                     </div>
                     <div class="score-box">
-                        <span class="score-value" id="dispTotalLocked" style="color: var(--accent-emerald);">130.00 GEN</span>
+                        <span class="score-value" id="dispTotalLocked" style="color: var(--accent-emerald);">-- GEN</span>
                         <span class="score-label">Total Locked Funds</span>
                     </div>
                 </div>
@@ -641,29 +706,29 @@
                 <div class="info-panel">
                     <div class="info-row">
                         <span class="info-k">Challenge Status:</span>
-                        <span class="status-pill status-active" id="dispStatus">ACTIVE</span>
+                        <span class="status-pill status-pending" id="dispStatus">UNKNOWN</span>
                     </div>
                     <div class="info-row">
                         <span class="info-k">Adjudication Verdict:</span>
-                        <span class="info-v" id="dispVerdict" style="color: var(--accent-cyan);">AWAITING_ADJUDICATION</span>
+                        <span class="info-v" id="dispVerdict" style="color: var(--accent-cyan);">--</span>
                     </div>
                     <div class="info-row">
-                        <span class="info-k">Bounty / Developer Stake:</span>
-                        <span class="info-v" id="dispFundBreakdown">100.00 GEN / 30.00 GEN</span>
+                        <span class="info-k">Bounty / Dev Stake:</span>
+                        <span class="info-v" id="dispFundBreakdown">-- / --</span>
                     </div>
                     <div class="info-row">
                         <span class="info-k">Model Identifier:</span>
-                        <span class="info-v" id="dispModelId" style="font-size: 11px;">meta-llama/Llama-3.1-8B-Instruct</span>
+                        <span class="info-v" id="dispModelId" style="font-size: 11px;">--</span>
                     </div>
                     <div class="info-row">
-                        <span class="info-k">Latest Transaction:</span>
-                        <span class="info-v" id="dispLatestTx" style="font-size: 11px;">0x923cacf...66dda369 ↗</span>
+                        <span class="info-k">Latest Tx / Record:</span>
+                        <span class="info-v" id="dispLatestTx" style="font-size: 11px;">None</span>
                     </div>
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label">Neural Validator Consensus Rationale</label>
-                    <textarea class="form-textarea" id="dispRationale" readonly style="min-height: 55px;">Live GenLayer consensus engine connected. Challenge #0 verified active on-chain.</textarea>
+                    <label class="form-label">Consensus Rationale & Evidence</label>
+                    <textarea class="form-textarea" id="dispRationale" readonly style="min-height: 55px;">Awaiting contract read or simulation execution...</textarea>
                 </div>
 
                 <div class="audit-log" id="auditLog">
@@ -678,25 +743,26 @@
         import { createClient, createAccount, generatePrivateKey } from 'https://esm.sh/genlayer-js@1.2.0';
         import { testnetBradbury, studionet, localnet } from 'https://esm.sh/genlayer-js@1.2.0/chains';
 
+        let appMode = 'live'; // 'live' or 'sim'
         let client = null;
         let currentAccount = null;
         let activePersona = 'sponsor';
 
         const PERSONAS = {
             sponsor: {
-                name: 'Sponsor (Alice - Grant Funder)',
+                name: 'Alice (Sponsor - Grant Funder)',
                 address: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
                 privateKey: '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80',
             },
             developer: {
-                name: 'Model Developer (Bob - Open Weights Lab)',
+                name: 'Bob (Model Developer - Open Weights Lab)',
                 address: '0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC',
                 privateKey: '0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d',
             },
         };
 
-        // In-Memory Simulation State (Interactive Fail-Safe for Sandbox / Zero-Gas evaluation)
-        const localSimState = {
+        // Local In-Memory Simulation State (for GenVM Simulator mode ONLY)
+        const simState = {
             challenge_id: 0,
             sponsor: PERSONAS.sponsor.address,
             model_developer: PERSONAS.developer.address,
@@ -707,13 +773,11 @@
             committed_leaderboard_url: 'https://huggingface.co/api/models/open-llm-leaderboard/evals/deep-coder-v2',
             bounty_escrow: '100000000000000000000', // 100 GEN
             required_developer_stake: '30000000000000000000', // 30 GEN
-            developer_stake_deposited: '30000000000000000000',
-            start_timestamp: Math.floor(Date.now() / 1000).toString(),
-            end_timestamp: (Math.floor(Date.now() / 1000) + 86400 * 7).toString(),
-            status: 'ACTIVE',
-            adjudication_verdict: 'AWAITING_ADJUDICATION',
-            adjudication_confidence: 96,
-            adjudication_summary: 'Live GenLayer consensus engine connected. Challenge #0 verified active on-chain.',
+            developer_stake_deposited: '0',
+            status: 'PENDING_STAKE',
+            adjudication_verdict: 'AWAITING_STAKE',
+            adjudication_confidence: 0,
+            adjudication_summary: 'Challenge created in GenVM Simulator. Waiting for Bob (developer) to deposit 30 GEN stake.',
             is_finalized: false
         };
 
@@ -727,6 +791,30 @@
             log.scrollTop = log.scrollHeight;
         }
 
+        window.setAppMode = function(mode) {
+            appMode = mode;
+            const btnLive = document.getElementById('btnModeLive');
+            const btnSim = document.getElementById('btnModeSim');
+            const cardIndicator = document.getElementById('cardModeIndicator');
+
+            if (mode === 'live') {
+                btnLive.className = 'mode-btn active-live';
+                btnSim.className = 'mode-btn';
+                cardIndicator.className = 'mode-banner live-mode';
+                cardIndicator.innerHTML = '🌐 Live On-Chain RPC Mode (Direct GenLayer Network)';
+                addLog('[Mode Changed] Switched to LIVE ON-CHAIN RPC MODE. Operations execute directly on GenLayer network.', 'info');
+                refreshContractState();
+            } else {
+                btnLive.className = 'mode-btn';
+                btnSim.className = 'mode-btn active-sim';
+                cardIndicator.className = 'mode-banner sim-mode';
+                cardIndicator.innerHTML = '🔬 GenVM Local Simulator (Zero-Gas Consensus Test Runner)';
+                addLog('[Mode Changed] Switched to INTERACTIVE GENVM SIMULATOR MODE. Test state transitions locally.', 'sim');
+                renderState(simState);
+                document.getElementById('dispLatestTx').innerHTML = `<span style="color: #a78bfa;">LOCAL_SIMULATION_ACTIVE</span>`;
+            }
+        };
+
         function getSelectedChain() {
             const val = document.getElementById('networkSelect').value;
             if (val === 'studionet') return studionet;
@@ -736,7 +824,7 @@
 
         window.setSigningPersona = function(personaKey) {
             activePersona = personaKey;
-            document.querySelectorAll('#btnRoleSponsor, #btnRoleDeveloper, #btnRoleCustom').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.persona-btn').forEach(b => b.classList.remove('active'));
 
             if (personaKey === 'sponsor') {
                 document.getElementById('btnRoleSponsor').classList.add('active');
@@ -777,8 +865,9 @@
                 document.getElementById('netBadge').innerHTML = `<div class="pulse-dot"></div> ${chain.name}`;
 
                 addLog(`Connected: ${addr} on ${chain.name}`, 'ok');
-                renderChallengeState(localSimState);
-                refreshContractState();
+                if (appMode === 'live') {
+                    refreshContractState();
+                }
             } catch (err) {
                 addLog(`Client Init Error: ${err.message}`, 'err');
             }
@@ -794,20 +883,21 @@
             document.getElementById(tabId).classList.add('active');
         };
 
-        function renderChallengeState(c) {
-            const bounty = (Number(c.bounty_escrow) / 1e18).toFixed(2);
-            const stake = (Number(c.developer_stake_deposited) / 1e18).toFixed(2);
-            const total = (Number(BigInt(c.bounty_escrow) + BigInt(c.developer_stake_deposited)) / 1e18).toFixed(2);
+        function renderState(c) {
+            if (!c) return;
+            const bounty = (Number(c.bounty_escrow || 0) / 1e18).toFixed(2);
+            const stake = (Number(c.developer_stake_deposited || 0) / 1e18).toFixed(2);
+            const total = (Number(BigInt(c.bounty_escrow || 0) + BigInt(c.developer_stake_deposited || 0)) / 1e18).toFixed(2);
 
             document.getElementById('dispTotalLocked').innerText = `${total} GEN`;
             document.getElementById('dispFundBreakdown').innerText = `${bounty} GEN / ${stake} GEN`;
-            document.getElementById('dispConfidence').innerText = `${c.adjudication_confidence}%`;
-            document.getElementById('dispVerdict').innerText = c.adjudication_verdict || 'AWAITING_ADJUDICATION';
-            document.getElementById('dispRationale').value = c.adjudication_summary || 'Challenge verified active.';
-            document.getElementById('dispModelId').innerText = c.model_identifier || 'meta-llama/Llama-3.1-8B-Instruct';
+            document.getElementById('dispConfidence').innerText = `${c.adjudication_confidence || 0}%`;
+            document.getElementById('dispVerdict').innerText = c.adjudication_verdict || 'NONE';
+            document.getElementById('dispRationale').value = c.adjudication_summary || 'No rationale available.';
+            document.getElementById('dispModelId').innerText = c.model_identifier || 'None';
 
             const pill = document.getElementById('dispStatus');
-            pill.innerText = c.status;
+            pill.innerText = c.status || 'UNKNOWN';
             if (c.status === 'RELEASED') pill.className = 'status-pill status-released';
             else if (c.status === 'SLASHED') pill.className = 'status-pill status-slashed';
             else if (c.status === 'ACTIVE') pill.className = 'status-pill status-active';
@@ -819,7 +909,7 @@
             const btn = document.getElementById('btnCreateChallenge');
             try {
                 btn.disabled = true;
-                btn.innerText = '⏳ Locking Bounty & Creating Challenge...';
+                btn.innerText = '⏳ Processing Bounty Creation...';
 
                 const contractAddr = document.getElementById('contractAddressInput').value.trim().toLowerCase();
                 const developer = document.getElementById('createDeveloperAddr').value.trim().toLowerCase();
@@ -834,44 +924,48 @@
                 const stakeWei = BigInt(Math.floor(devStake * 1e18));
                 const durationSecs = BigInt(86400 * 7); // 7 days
 
-                addLog(`Creating ${category} benchmark challenge for ${modelId} (${developer})...`, 'info');
-                addLog(`Committed leaderboard URL: ${leaderboardUrl}`, 'info');
+                if (appMode === 'live') {
+                    addLog(`[Live RPC] Sending create_challenge tx to ${contractAddr}...`, 'info');
+                    addLog(`Committed Leaderboard: ${leaderboardUrl}`, 'info');
 
-                let txHash = null;
-                try {
-                    txHash = await client.writeContract({
+                    const txHash = await client.writeContract({
                         address: contractAddr,
                         functionName: 'create_challenge',
                         args: [developer, category, spec, leaderboardUrl, stakeWei, durationSecs, modelId],
                         value: bountyWei,
                     });
-                    await client.waitForTransactionReceipt({ hash: txHash });
-                } catch (rpcErr) {
-                    // Fallback to simulated transaction hash for zero-gas sandbox demonstration
-                    txHash = '0x' + Array.from({length: 64}, () => Math.floor(Math.random()*16).toString(16)).join('');
-                    addLog(`[Sandbox Consensus Engine] RPC Notice: ${rpcErr.message.slice(0, 60)}... Executed via In-Memory GenVM Sandbox.`, 'warn');
+
+                    addLog(`Tx Submitted: ${txHash}. Waiting for on-chain receipt...`, 'info');
+                    const receipt = await client.waitForTransactionReceipt({ hash: txHash });
+                    addLog(`Tx Confirmed in Block #${receipt.blockNumber || 'Latest'}!`, 'ok');
+                    updateTxDisplay(txHash);
+                    await refreshContractState();
+                } else {
+                    // GenVM Simulator Execution
+                    simState.model_developer = developer;
+                    simState.model_identifier = modelId;
+                    simState.target_benchmark_category = category;
+                    simState.benchmark_specification = spec;
+                    simState.committed_leaderboard_url = leaderboardUrl;
+                    simState.bounty_escrow = bountyWei.toString();
+                    simState.required_developer_stake = stakeWei.toString();
+                    simState.developer_stake_deposited = '0';
+                    simState.status = 'PENDING_STAKE';
+                    simState.adjudication_verdict = 'AWAITING_STAKE';
+                    simState.adjudication_confidence = 0;
+                    simState.adjudication_summary = `[GenVM Simulator] Challenge #${simState.challenge_id} initialized by Sponsor (${bounty} GEN locked). Awaiting developer deposit of ${devStake} GEN stake.`;
+
+                    addLog(`[GenVM Simulator] Bounty Locked: ${bounty} GEN. Challenge #${simState.challenge_id} created in PENDING_STAKE state.`, 'sim');
+                    document.getElementById('dispLatestTx').innerHTML = `<span style="color: #a78bfa;">SIMULATED_STEP_1_BOUNTY_LOCKED</span>`;
+                    renderState(simState);
                 }
-
-                // Update local simulation state
-                localSimState.model_developer = developer;
-                localSimState.model_identifier = modelId;
-                localSimState.target_benchmark_category = category;
-                localSimState.benchmark_specification = spec;
-                localSimState.committed_leaderboard_url = leaderboardUrl;
-                localSimState.bounty_escrow = bountyWei.toString();
-                localSimState.required_developer_stake = stakeWei.toString();
-                localSimState.developer_stake_deposited = '0';
-                localSimState.status = 'PENDING_STAKE';
-                localSimState.adjudication_verdict = 'AWAITING_STAKE';
-                localSimState.adjudication_summary = `Challenge #${localSimState.challenge_id} created by Sponsor. Waiting for developer to deposit ${devStake} GEN stake.`;
-
-                addLog(`Challenge Tx: ${txHash}`, 'ok');
-                updateTxDisplay(txHash);
-                addLog('Challenge created and bounty locked successfully!', 'ok');
-
-                renderChallengeState(localSimState);
             } catch (err) {
-                addLog(`Create Challenge Error: ${err.message}`, 'err');
+                addLog(`[Transaction Failed] Error: ${err.message}`, 'err');
+                if (err.message.includes('funds') || err.message.includes('0')) {
+                    addLog('💡 Tip: Your account has 0 GEN on this network. Please fund your wallet via GenLayer Faucet or switch to "GenVM Simulator" mode for testing.', 'warn');
+                } else if (err.message.includes('not found') || err.message.includes('Contract')) {
+                    addLog('💡 Tip: Contract is not deployed at this address on the selected network. Please deploy VeriModel or verify the address in GenLayer Studio.', 'warn');
+                }
             } finally {
                 btn.disabled = false;
                 btn.innerText = '🏆 Lock Bounty & Launch Challenge';
@@ -890,34 +984,32 @@
                 const amount = parseFloat(document.getElementById('stakeAmount').value);
                 const stakeWei = BigInt(Math.floor(amount * 1e18));
 
-                addLog(`Staking ${amount} GEN developer collateral for Challenge #${chalId}...`, 'info');
-
-                let txHash = null;
-                try {
-                    txHash = await client.writeContract({
+                if (appMode === 'live') {
+                    addLog(`[Live RPC] Sending stake_and_enter_challenge for Challenge #${chalId}...`, 'info');
+                    const txHash = await client.writeContract({
                         address: contractAddr,
                         functionName: 'stake_and_enter_challenge',
                         args: [chalId],
                         value: stakeWei,
                     });
-                    await client.waitForTransactionReceipt({ hash: txHash });
-                } catch (rpcErr) {
-                    txHash = '0x' + Array.from({length: 64}, () => Math.floor(Math.random()*16).toString(16)).join('');
-                    addLog(`[Sandbox Consensus Engine] RPC Notice: ${rpcErr.message.slice(0, 60)}... Executed via In-Memory GenVM Sandbox.`, 'warn');
+
+                    addLog(`Staking Tx Submitted: ${txHash}. Waiting for confirmation...`, 'info');
+                    const receipt = await client.waitForTransactionReceipt({ hash: txHash });
+                    addLog(`Stake Confirmed in Block #${receipt.blockNumber || 'Latest'}! Challenge is ACTIVE.`, 'ok');
+                    updateTxDisplay(txHash);
+                    await refreshContractState();
+                } else {
+                    simState.developer_stake_deposited = stakeWei.toString();
+                    simState.status = 'ACTIVE';
+                    simState.adjudication_verdict = 'AWAITING_ADJUDICATION';
+                    simState.adjudication_summary = `[GenVM Simulator] Developer stake of ${amount} GEN confirmed. Challenge #${chalId} is now ACTIVE and ready for validator consensus.`;
+
+                    addLog(`[GenVM Simulator] Developer Stake Deposited: ${amount} GEN. Total Locked: ${(Number(BigInt(simState.bounty_escrow) + stakeWei) / 1e18).toFixed(2)} GEN.`, 'sim');
+                    document.getElementById('dispLatestTx').innerHTML = `<span style="color: #a78bfa;">SIMULATED_STEP_2_STAKE_DEPOSITED</span>`;
+                    renderState(simState);
                 }
-
-                localSimState.developer_stake_deposited = stakeWei.toString();
-                localSimState.status = 'ACTIVE';
-                localSimState.adjudication_verdict = 'AWAITING_ADJUDICATION';
-                localSimState.adjudication_summary = `Developer stake of ${amount} GEN confirmed. Challenge #${chalId} is now ACTIVE and ready for validator adjudication.`;
-
-                addLog(`Staking Tx: ${txHash}`, 'ok');
-                updateTxDisplay(txHash);
-                addLog('Developer stake deposited and challenge activated!', 'ok');
-
-                renderChallengeState(localSimState);
             } catch (err) {
-                addLog(`Stake Challenge Error: ${err.message}`, 'err');
+                addLog(`[Stake Failed] Error: ${err.message}`, 'err');
             } finally {
                 btn.disabled = false;
                 btn.innerText = '🛡️ Deposit Stake & Activate Challenge';
@@ -929,55 +1021,60 @@
             const btn = document.getElementById('btnAdjudicateBenchmark');
             try {
                 btn.disabled = true;
-                btn.innerText = '⏳ Validators Fetching Live Leaderboard Data...';
+                btn.innerText = '⏳ Multi-Validator Adjudication Running...';
 
                 const contractAddr = document.getElementById('contractAddressInput').value.trim();
                 const chalId = BigInt(document.getElementById('adjChallengeId').value);
                 const notes = document.getElementById('adjNotes').value.trim();
                 const evidenceUrl = document.getElementById('adjEvidenceUrl').value.trim();
 
-                addLog(`Triggering benchmark consensus for Challenge #${chalId}...`, 'info');
-                addLog(`[Validator Fleet] Fetching committed leaderboard: ${evidenceUrl}`, 'info');
-                addLog('[Equivalence Principle] Multi-LLM validators comparing benchmark scores against contracted HumanEval/MBPP thresholds...', 'info');
+                if (appMode === 'live') {
+                    addLog(`[Live RPC] Triggering on-chain adjudicate_benchmark on Challenge #${chalId}...`, 'info');
+                    addLog(`[Validators] Fetching committed telemetry from: ${evidenceUrl}`, 'info');
 
-                let txHash = null;
-                try {
-                    txHash = await client.writeContract({
+                    const txHash = await client.writeContract({
                         address: contractAddr,
                         functionName: 'adjudicate_benchmark',
                         args: [chalId, notes, evidenceUrl],
+                        value: BigInt(0),
                     });
-                    await client.waitForTransactionReceipt({ hash: txHash });
-                } catch (rpcErr) {
-                    txHash = '0x' + Array.from({length: 64}, () => Math.floor(Math.random()*16).toString(16)).join('');
-                    addLog(`[Sandbox Consensus Engine] Executed multi-validator evaluation under Equivalence Principle.`, 'ok');
+
+                    addLog(`Adjudication Tx Submitted: ${txHash}. Waiting for validator consensus receipt...`, 'info');
+                    const receipt = await client.waitForTransactionReceipt({ hash: txHash });
+                    addLog(`Consensus Receipt Confirmed in Block #${receipt.blockNumber || 'Latest'}!`, 'ok');
+                    updateTxDisplay(txHash);
+                    await refreshContractState();
+                } else {
+                    simState.status = 'RELEASED';
+                    simState.adjudication_verdict = 'RELEASE_BOUNTY';
+                    simState.adjudication_confidence = 96;
+                    simState.adjudication_summary = '[GenVM Simulator] Multi-validator consensus reached (confidence: 96%). Evaluated HuggingFace leaderboard telemetry confirmed HumanEval pass@1 score of 84.6% >= required 80.0% threshold. 100 GEN bounty and 30 GEN stake released to developer.';
+                    simState.is_finalized = true;
+
+                    addLog(`[GenVM Simulator] Consensus Finalized: RELEASE_BOUNTY (Conf: 96%). 100 GEN Bounty + 30 GEN Stake released to Bob!`, 'sim');
+                    document.getElementById('dispLatestTx').innerHTML = `<span style="color: var(--accent-emerald);">SIMULATED_STEP_3_SETTLED_RELEASE</span>`;
+                    renderState(simState);
                 }
-
-                // Simulate successful benchmark release
-                localSimState.status = 'RELEASED';
-                localSimState.adjudication_verdict = 'RELEASE_BOUNTY';
-                localSimState.adjudication_confidence = 96;
-                localSimState.adjudication_summary = 'Multi-validator consensus reached (confidence: 96%). Evaluated HuggingFace leaderboard telemetry confirmed HumanEval pass@1 score of 84.6% >= required 80.0% threshold. 100 GEN bounty and 30 GEN stake released to developer.';
-                localSimState.is_finalized = true;
-
-                addLog(`Adjudication Tx: ${txHash}`, 'ok');
-                updateTxDisplay(txHash);
-                addLog('Consensus reached! Verdict: RELEASE_BOUNTY (Conf: 96%). Funds settled deterministically on-chain!', 'ok');
-
-                renderChallengeState(localSimState);
             } catch (err) {
-                addLog(`Adjudication Error: ${err.message}`, 'err');
+                addLog(`[Adjudication Failed] Error: ${err.message}`, 'err');
             } finally {
                 btn.disabled = false;
                 btn.innerText = '⚖️ Trigger Multi-Validator AI Benchmark Adjudication';
             }
         });
 
-        // 4. Dynamic Contract State Reading
+        // 4. Read Live On-Chain Contract State
         async function refreshContractState() {
+            if (appMode !== 'live') {
+                renderState(simState);
+                return;
+            }
+
             try {
                 const contractAddr = document.getElementById('contractAddressInput').value.trim();
                 const chalId = BigInt(document.getElementById('stakeChallengeId').value || 0);
+
+                addLog(`[Live RPC] Reading get_challenge(${chalId}) from ${contractAddr}...`, 'info');
 
                 const c = await client.readContract({
                     address: contractAddr,
@@ -986,13 +1083,16 @@
                 });
 
                 if (c) {
-                    renderChallengeState(c);
-                    addLog(`On-Chain State: Challenge #${c.challenge_id} Status=${c.status} Verdict=${c.adjudication_verdict}`, 'ok');
+                    renderState(c);
+                    addLog(`[On-Chain State Loaded] Challenge #${c.challenge_id || chalId}: Status=${c.status} Verdict=${c.adjudication_verdict}`, 'ok');
                 }
             } catch (err) {
-                // If on-chain read fails, maintain active local simulation state seamlessly
-                renderChallengeState(localSimState);
-                addLog(`[Live Engine] Local state synchronized for Challenge #${localSimState.challenge_id} (Status: ${localSimState.status}).`, 'info');
+                addLog(`[Read Contract Notice] ${err.message}`, 'warn');
+                // Reset display to indicate un-read state honestly
+                document.getElementById('dispStatus').innerText = 'NOT_DEPLOYED_OR_EMPTY';
+                document.getElementById('dispStatus').className = 'status-pill status-pending';
+                document.getElementById('dispVerdict').innerText = 'READ_FAILED';
+                document.getElementById('dispRationale').value = `Live On-Chain Read Error: ${err.message}\n\nPlease ensure VeriModel is deployed on the selected network, or switch to "GenVM Simulator" mode to preview the lifecycle.`;
             }
         }
 
@@ -1000,7 +1100,7 @@
             const shortHash = hash.slice(0, 10) + '...' + hash.slice(-8);
             const chain = getSelectedChain();
             const explorerUrl = chain.blockExplorers?.default?.url ? `${chain.blockExplorers.default.url}tx/${hash}` : `https://explorer-bradbury.genlayer.com/tx/${hash}`;
-            document.getElementById('dispLatestTx').innerHTML = `<a href="${explorerUrl}" target="_blank" style="color: var(--accent-cyan); text-decoration: none;">${shortHash} ↗</a>`;
+            document.getElementById('dispLatestTx').innerHTML = `<a href="${explorerUrl}" target="_blank" style="color: var(--accent-cyan); text-decoration: underline;">${shortHash} ↗</a>`;
         }
 
         document.getElementById('btnRefreshState').addEventListener('click', refreshContractState);
